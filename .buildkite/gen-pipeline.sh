@@ -299,11 +299,11 @@ for test in ${tests[@]}; do
   if [[ ${test} == *-gpu-* ]] || [[ ${test} == *-mixed-* ]]; then
     # if gloo is specified, run gloo_test
     if [[ ${test} == *-gloo* ]]; then
-      run_gloo ${test} "2x-gpu-g4" "4x-gpu-g4"
+      run_gloo ${test} "2x-gpu-g4" "4x-gpu"
     fi
     # if mpi is specified, run mpi gpu_test
     if [[ ${test} == *mpi* ]]; then
-      run_all ${test} "2x-gpu-g4" "4x-gpu-g4"
+      run_all ${test} "2x-gpu-g4" "4x-gpu"
     fi
   fi
 done
