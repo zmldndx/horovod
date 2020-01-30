@@ -91,7 +91,7 @@ run_test() {
   echo "    queue: ${queue}"
 }
 
-run_all() {
+run_mpi() {
   local test=$1
   local queue=$2
   local pytest_queue=$3
@@ -111,82 +111,67 @@ run_all() {
     ":pytest: Run PyTests (${test})" \
     "bash -c \"cd /horovod/test && (echo test_*.py ${exclude_keras_if_needed} ${exclude_interactiverun} | xargs -n 1 \\\$(cat /mpirun_command) pytest -v --capture=no)\""
 
-#  # Run test_interactiverun.py
-#  if [[ ${test} != *"mpich"* ]]; then
-#    # TODO: support mpich
-#    run_test "${test}" "${queue}" \
-#      ":jupyter: Run PyTests test_interactiverun (${test})" \
-#      "bash -c \"cd /horovod/test && pytest -v --capture=no test_interactiverun.py\""
-#  fi
-#
-#  # Legacy TensorFlow tests
-#  if [[ ${test} != *"tf2_"* ]] && [[ ${test} != *"tfhead"* ]]; then
-#    run_test "${test}" "${queue}" \
-#      ":tensorflow: Test TensorFlow MNIST (${test})" \
-#      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow_mnist.py\""
-#
-#    if [[ ${test} != *"tf1_1_0"* && ${test} != *"tf1_6_0"* ]]; then
-#      run_test "${test}" "${queue}" \
-#        ":tensorflow: Test TensorFlow Eager MNIST (${test})" \
-#        "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow_mnist_eager.py\""
-#    fi
-#
-#    run_test "${test}" "${queue}" \
-#      ":tensorflow: Test Keras MNIST (${test})" \
-#      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/keras_mnist_advanced.py\""
-#  fi
-#
-#  run_test "${test}" "${queue}" \
-#    ":python: Test PyTorch MNIST (${test})" \
-#    "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/pytorch_mnist.py\""
-#
-#  run_test "${test}" "${queue}" \
-#    ":muscle: Test MXNet MNIST (${test})" \
-#    "bash -c \"OMP_NUM_THREADS=1 \\\$(cat /mpirun_command) python /horovod/examples/mxnet_mnist.py\""
-#
-#  # tests that should be executed only with the latest release since they don't test
-#  # a framework-specific functionality
-#  if [[ ${test} == *"tf1_14_0"* ]]; then
-#    run_test "${test}" "${queue}" \
-#      ":muscle: Test Stall (${test})" \
-#      "bash -c \"\\\$(cat /mpirun_command) python /horovod/test/test_stall.py\""
-#
-#    if [[ ${test} == *"openmpi"* ]]; then
-#      run_test "${test}" "${queue}" \
-#        ":terminal: Test Horovodrun (${test})" \
-#        "horovodrun -np 2 -H localhost:2 python /horovod/examples/tensorflow_mnist.py"
-#      run_test "${test}" "${queue}" \
-#        ":terminal: Test Horovodrun (${test})" \
-#        "echo 'localhost slots=2' > hostfile" \
-#        "horovodrun -np 2 -hostfile hostfile python /horovod/examples/mxnet_mnist.py"
-#    fi
-#  fi
-#
-#  # TensorFlow 2.0 tests
-#  if [[ ${test} == *"tf2_"* ]] || [[ ${test} == *"tfhead"* ]]; then
-#    run_test "${test}" "${queue}" \
-#      ":tensorflow: Test TensorFlow 2.0 MNIST (${test})" \
-#      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow2_mnist.py\""
-#
-#    run_test "${test}" "${queue}" \
-#      ":tensorflow: Test TensorFlow 2.0 Keras MNIST (${test})" \
-#      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow2_keras_mnist.py\""
-#  fi
-#
-#  # Horovod Spark Estimator tests
-#  if [[ ${test} != *"tf1_1_0"* && ${test} != *"tf1_6_0"* && ${test} != *"torch0_"* && ${test} != *"mpich"* ]]; then
-#    run_test "${test}" "${queue}" \
-#      ":spark: PyTests Spark Estimators (${test})" \
-#      "bash -c \"cd /horovod/test && pytest --forked -v --capture=no test_spark_keras.py test_spark_torch.py\""
-#
-#    run_test "${test}" "${queue}" \
-#      ":spark: Spark Keras MNIST (${test})" \
-#      "bash -c \"OMP_NUM_THREADS=1 python /horovod/examples/keras_spark_mnist.py --num-proc 2 --work-dir /work --data-dir /data --epochs 3\""
-#
-#    run_test "${test}" "${queue}" \
-#      ":spark: Spark Torch MNIST (${test})" \
-#      "bash -c \"OMP_NUM_THREADS=1 python /horovod/examples/pytorch_spark_mnist.py --num-proc 2 --work-dir /work --data-dir /data --epochs 3\""
-#  fi
+  # Run test_interactiverun.py
+  if [[ ${test} != *"mpich"* ]]; then
+    # TODO: support mpich
+    run_test "${test}" "${queue}" \
+      ":jupyter: Run PyTests test_interactiverun (${test})" \
+      "bash -c \"cd /horovod/test && pytest -v --capture=no test_interactiverun.py\""
+  fi
+
+  # Legacy TensorFlow tests
+  if [[ ${test} != *"tf2_"* ]] && [[ ${test} != *"tfhead"* ]]; then
+    run_test "${test}" "${queue}" \
+      ":tensorflow: Test TensorFlow MNIST (${test})" \
+      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow_mnist.py\""
+
+    if [[ ${test} != *"tf1_1_0"* && ${test} != *"tf1_6_0"* ]]; then
+      run_test "${test}" "${queue}" \
+        ":tensorflow: Test TensorFlow Eager MNIST (${test})" \
+        "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow_mnist_eager.py\""
+    fi
+
+    run_test "${test}" "${queue}" \
+      ":tensorflow: Test Keras MNIST (${test})" \
+      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/keras_mnist_advanced.py\""
+  fi
+
+  run_test "${test}" "${queue}" \
+    ":python: Test PyTorch MNIST (${test})" \
+    "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/pytorch_mnist.py\""
+
+  run_test "${test}" "${queue}" \
+    ":muscle: Test MXNet MNIST (${test})" \
+    "bash -c \"OMP_NUM_THREADS=1 \\\$(cat /mpirun_command) python /horovod/examples/mxnet_mnist.py\""
+
+  # tests that should be executed only with the latest release since they don't test
+  # a framework-specific functionality
+  if [[ ${test} == *"tf1_14_0"* ]]; then
+    run_test "${test}" "${queue}" \
+      ":muscle: Test Stall (${test})" \
+      "bash -c \"\\\$(cat /mpirun_command) python /horovod/test/test_stall.py\""
+
+    if [[ ${test} == *"openmpi"* ]]; then
+      run_test "${test}" "${queue}" \
+        ":terminal: Test Horovodrun (${test})" \
+        "horovodrun -np 2 -H localhost:2 python /horovod/examples/tensorflow_mnist.py"
+      run_test "${test}" "${queue}" \
+        ":terminal: Test Horovodrun (${test})" \
+        "echo 'localhost slots=2' > hostfile" \
+        "horovodrun -np 2 -hostfile hostfile python /horovod/examples/mxnet_mnist.py"
+    fi
+  fi
+
+  # TensorFlow 2.0 tests
+  if [[ ${test} == *"tf2_"* ]] || [[ ${test} == *"tfhead"* ]]; then
+    run_test "${test}" "${queue}" \
+      ":tensorflow: Test TensorFlow 2.0 MNIST (${test})" \
+      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow2_mnist.py\""
+
+    run_test "${test}" "${queue}" \
+      ":tensorflow: Test TensorFlow 2.0 Keras MNIST (${test})" \
+      "bash -c \"\\\$(cat /mpirun_command) python /horovod/examples/tensorflow2_keras_mnist.py\""
+  fi
 }
 
 run_gloo() {
@@ -220,10 +205,29 @@ run_gloo() {
     "horovodrun -np 2 -H localhost:2 --gloo python /horovod/examples/mxnet_mnist.py"
 }
 
+run_spark() {
+  local test=$1
+  local queue=$2
+
+  # Horovod Spark Estimator tests
+  if [[ ${test} != *"tf1_1_0"* && ${test} != *"tf1_6_0"* && ${test} != *"torch0_"* && ${test} != *"mpich"* ]]; then
+    run_test "${test}" "${queue}" \
+      ":spark: PyTests Spark Estimators (${test})" \
+      "bash -c \"cd /horovod/test && pytest --forked -v --capture=no test_spark_keras.py test_spark_torch.py\""
+
+    run_test "${test}" "${queue}" \
+      ":spark: Spark Keras MNIST (${test})" \
+      "bash -c \"OMP_NUM_THREADS=1 python /horovod/examples/keras_spark_mnist.py --num-proc 2 --work-dir /work --data-dir /data --epochs 3\""
+
+    run_test "${test}" "${queue}" \
+      ":spark: Spark Torch MNIST (${test})" \
+      "bash -c \"OMP_NUM_THREADS=1 python /horovod/examples/pytorch_spark_mnist.py --num-proc 2 --work-dir /work --data-dir /data --epochs 3\""
+  fi
+}
+
 run_single() {
   local test=$1
   local queue=$2
-  local pytest_queue=$3
 
   # Only in TensorFlow 1.X
   if [[ ${test} != *"tf2_"* ]] && [[ ${test} != *"tfhead"* ]]; then
@@ -282,12 +286,17 @@ for test in ${tests[@]}; do
     if [[ ${test} == *-gloo* ]]; then
       run_gloo ${test} "cpu" "cpu"
     fi
+
     # if mpi is specified, run mpi cpu_test
     if [[ ${test} == *mpi* ]]; then
-      run_all ${test} "cpu" "cpu"
+      run_mpi ${test} "cpu" "cpu"
     fi
+
+    # spark tests use MPI
+    run_spark "cpu"
+
     # no runner application, world size = 1
-    run_single ${test} "cpu" "cpu"
+    run_single ${test} "cpu"
   fi
 done
 
@@ -301,9 +310,10 @@ for test in ${tests[@]}; do
     if [[ ${test} == *-gloo* ]]; then
       run_gloo ${test} "2x-gpu-g4" "4x-gpu-g4"
     fi
+
     # if mpi is specified, run mpi gpu_test
     if [[ ${test} == *mpi* ]]; then
-      run_all ${test} "2x-gpu-g4" "4x-gpu-g4"
+      run_mpi ${test} "2x-gpu-g4" "4x-gpu-g4"
     fi
   fi
 done
