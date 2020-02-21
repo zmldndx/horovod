@@ -326,16 +326,22 @@ if _LegacyOptimizer is not None:
             self._device_sparse = device_sparse
             self._compression = compression
             self._backward_passes_per_step = backward_passes_per_step
-
+            self.use_locking = use_locking
+            
         def _prepare(self):
             self._step_count = tf.get_variable(
                 name="step_count", shape=[], dtype=tf.int64, trainable=False,
                 initializer=tf.zeros_initializer)
             self._is_first_step = tf.cast(tf.math.equal(self._step_count, 0), dtype=tf.bool)
             self._is_comm_step  = tf.cast(tf.math.equal(self._step_count % self._backward_passes_per_step, self._backward_passes_per_step - 1), dtype=tf.bool)
+            self._optimizer._prepare()
+        
+        def _create_slots(self, var_list):
+            return self._optimizer._create_slots(var_list)
         
         def _apply_shared(self, var, get_update_op):
-            start_slot = self._get_or_make_slot(var, "delta_start")
+            #start_slot = self._get_or_make_slot(var, "delta_start")
+            start_slot = self._zeros_slot(var, "delta_start", "delta_start")
 
             # initialize start on the first step
             assign_op = tf.cond(self._is_first_step, 
@@ -378,6 +384,7 @@ if _LegacyOptimizer is not None:
 
         def _finish(self, update_ops, name_scope):
             with tf.control_dependencies(update_ops):
+                self._optimizer._finish(update_ops, name_scope)
                 return tf.assign_add(self._step_count, 1)
 
         def compute_gradients(self, *args, **kwargs):
@@ -388,7 +395,8 @@ if _LegacyOptimizer is not None:
 
         def apply_gradients(self, *args, **kwargs):
             """Calls this same method on the underlying optimizer."""
-            return self._optimizer.apply_gradients(*args, **kwargs)
+            #return self._optimizer.apply_gradients(*args, **kwargs)
+            return super(_DistributedAdasumOptimizer, self).apply_gradients(*args, **kwargs)
 
         def get_slot(self, var, name):
             """Calls this same method on the underlying optimizer."""
